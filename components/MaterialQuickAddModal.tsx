@@ -1,30 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Alert, StyleSheet, Dimensions } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import React, { useEffect, useState } from 'react';
+import { Alert, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 import {
-  Portal,
-  Modal,
-  Card,
-  Title,
-  Paragraph,
-  Button,
-  TextInput,
-  SegmentedButtons,
-  Chip,
-  Surface,
-  Text,
-  ActivityIndicator,
-  useTheme,
-  IconButton,
   Avatar,
+  Button,
+  Card,
   Divider,
   HelperText,
-  Switch,
+  IconButton,
   List,
+  Modal,
+  Portal,
+  SegmentedButtons,
+  Surface,
+  Switch,
+  Text,
+  TextInput,
+  useTheme
 } from 'react-native-paper';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');

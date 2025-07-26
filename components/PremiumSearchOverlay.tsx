@@ -1,19 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  TextInput,
-  Pressable,
-  ScrollView,
-  Animated,
-  Dimensions,
-  StatusBar,
-} from 'react-native';
-import { Text } from 'react-native-paper';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Dimensions,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+import { Text } from 'react-native-paper';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 

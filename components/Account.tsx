@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { Session } from '@supabase/supabase-js'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useState } from 'react'
-import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
 import Avatar from './Avatar'
 
@@ -15,6 +16,7 @@ export default function Account({ session }: Props) {
   const [username, setUsername] = useState('')
   const [website, setWebsite] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const insets = useSafeAreaInsets()
 
   useEffect(() => {
     if (session) getProfile()
@@ -84,12 +86,21 @@ export default function Account({ session }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <LinearGradient
         colors={['#667eea', '#764ba2']}
         style={styles.gradient}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView 
+          contentContainerStyle={[
+            styles.scrollContainer,
+            { 
+              paddingTop: Math.max(insets.top, 20),
+              paddingBottom: Math.max(insets.bottom, 100) // Account for tab bar
+            }
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Profile</Text>
             <TouchableOpacity
@@ -121,6 +132,7 @@ export default function Account({ session }: Props) {
                   <TextInput
                     style={styles.textInput}
                     placeholder="Enter your username"
+                    placeholderTextColor="#999"
                     value={username || ''}
                     onChangeText={(text) => setUsername(text)}
                   />
@@ -134,6 +146,7 @@ export default function Account({ session }: Props) {
                   <TextInput
                     style={styles.textInput}
                     placeholder="https://example.com"
+                    placeholderTextColor="#999"
                     value={website || ''}
                     onChangeText={(text) => setWebsite(text)}
                   />
@@ -176,83 +189,98 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   signOutButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 12,
-    padding: 12,
-  },
-  profileContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 20,
-    padding: 30,
+    borderRadius: 16,
+    padding: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 10,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  profileContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 24,
+    padding: 32,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 16,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 15,
-    elevation: 10,
+    shadowRadius: 24,
+    elevation: 16,
+    backdropFilter: 'blur(10px)',
   },
   avatarSection: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 32,
   },
   emailText: {
     fontSize: 16,
     color: '#666',
-    marginTop: 12,
+    marginTop: 16,
     fontWeight: '500',
+    textAlign: 'center',
   },
   formSection: {
-    gap: 20,
+    gap: 24,
   },
   inputGroup: {
-    gap: 8,
+    gap: 12,
   },
   inputLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
     marginLeft: 4,
+    letterSpacing: 0.5,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    paddingHorizontal: 16,
+    borderRadius: 16,
+    paddingHorizontal: 20,
     paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: 16,
   },
   textInput: {
     flex: 1,
     fontSize: 16,
-    paddingVertical: 16,
+    paddingVertical: 18,
     color: '#333',
+    fontWeight: '500',
   },
   updateButton: {
     backgroundColor: '#667eea',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 16,
     shadowColor: '#667eea',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 8,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
   },
   updateButtonDisabled: {
     backgroundColor: '#ccc',
@@ -262,6 +290,7 @@ const styles = StyleSheet.create({
   updateButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 }) 

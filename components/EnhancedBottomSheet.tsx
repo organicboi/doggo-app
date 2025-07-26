@@ -1,22 +1,22 @@
-import React, { useRef, useEffect } from 'react';
+import { MaterialIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef } from 'react';
 import {
-  View,
-  StyleSheet,
-  Pressable,
   Animated,
   Dimensions,
-  ScrollView,
   Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
 } from 'react-native';
-import { Text, useTheme, Button, Chip } from 'react-native-paper';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Chip, Text, useTheme } from 'react-native-paper';
 import { SvgXml } from 'react-native-svg';
-import { strayDogSvg } from '../assets/svg-strings/strayDogSvg';
-import { rescueDogSvg } from '../assets/svg-strings/rescueDogSvg';
 import { ownedDogSvg } from '../assets/svg-strings/ownedDogSvg';
-import * as Haptics from 'expo-haptics';
+import { rescueDogSvg } from '../assets/svg-strings/rescueDogSvg';
+import { strayDogSvg } from '../assets/svg-strings/strayDogSvg';
 import { openGoogleMapsNavigation } from '../lib/mapService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');

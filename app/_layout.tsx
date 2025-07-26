@@ -2,6 +2,7 @@ import { Session } from '@supabase/supabase-js';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import Auth from '../components/Auth';
 import { supabase } from '../lib/supabase';
 
@@ -27,17 +28,27 @@ export default function Layout() {
 
   // Show loading or auth screen if no session
   if (loading) {
-    return <View style={{ flex: 1, backgroundColor: '#667eea' }} />;
+    return (
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <View style={{ flex: 1, backgroundColor: '#667eea' }} />
+      </SafeAreaProvider>
+    );
   }
 
   if (!session) {
-    return <Auth />;
+    return (
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <Auth />
+      </SafeAreaProvider>
+    );
   }
 
   // Show main app if authenticated
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </SafeAreaProvider>
   );
 }

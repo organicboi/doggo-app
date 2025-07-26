@@ -1,35 +1,29 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Location from 'expo-location';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
+  ActivityIndicator,
   Alert,
-  Pressable,
+  Animated,
+  Dimensions,
   Linking,
   Platform,
-  ActivityIndicator,
+  Pressable,
   SafeAreaView,
-  TextInput,
-  Animated,
-  PanResponder,
-  Dimensions,
   ScrollView,
-  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
 } from 'react-native';
-import MapView, { 
-  Marker, 
-  Region, 
-  Callout, 
-  Heatmap, 
+import MapView, {
   Circle,
-  Polyline,
-  PROVIDER_GOOGLE 
+  Heatmap,
+  Marker
 } from 'react-native-maps';
-import * as Location from 'expo-location';
-import * as Haptics from 'expo-haptics';
-import { BlurView } from 'expo-blur';
-import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../lib/supabase';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');

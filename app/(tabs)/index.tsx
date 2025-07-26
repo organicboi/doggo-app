@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useState } from 'react'
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 
 const HomeScreen = () => {
   const [user, setUser] = useState<any>(null)
   const [greeting, setGreeting] = useState('')
+  const insets = useSafeAreaInsets()
 
   useEffect(() => {
     getUser()
@@ -39,12 +41,21 @@ const HomeScreen = () => {
   ]
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <LinearGradient
         colors={['#667eea', '#764ba2']}
         style={styles.gradient}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView 
+          contentContainerStyle={[
+            styles.scrollContainer,
+            { 
+              paddingTop: Math.max(insets.top, 20),
+              paddingBottom: Math.max(insets.bottom, 100) // Account for tab bar
+            }
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View>
@@ -129,141 +140,171 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     padding: 20,
-    paddingBottom: 100, // Account for tab bar
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 32,
     paddingTop: 10,
   },
   greeting: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   userName: {
     fontSize: 18,
     color: 'rgba(255, 255, 255, 0.8)',
     marginTop: 4,
+    fontWeight: '500',
   },
   notificationButton: {
     position: 'relative',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   notificationBadge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: 10,
+    right: 10,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#ff6b6b',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   section: {
-    marginBottom: 30,
+    marginBottom: 32,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 16,
+    marginBottom: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   quickActionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 16,
   },
   quickActionCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     alignItems: 'center',
     width: '47%',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 8,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    backdropFilter: 'blur(10px)',
   },
   quickActionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  quickActionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    textAlign: 'center',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
+  quickActionText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    backdropFilter: 'blur(10px)',
+  },
   statNumber: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#667eea',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   statLabel: {
     fontSize: 12,
     color: '#666',
     textAlign: 'center',
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   activityList: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 8,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    backdropFilter: 'blur(10px)',
   },
   activityItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
   activityIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(102, 126, 234, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   activityContent: {
     flex: 1,
@@ -272,10 +313,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 2,
+    marginBottom: 4,
+    letterSpacing: 0.2,
   },
   activityTime: {
     fontSize: 14,
     color: '#666',
+    fontWeight: '500',
   },
 })

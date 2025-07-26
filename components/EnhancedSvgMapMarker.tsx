@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, StyleSheet } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { Badge, useTheme } from 'react-native-paper';
 import { SvgXml } from 'react-native-svg';
 
 // Import SVG strings
-import { strayDogSvg } from '../assets/svg-strings/strayDogSvg';
-import { rescueDogSvg } from '../assets/svg-strings/rescueDogSvg';
 import { ownedDogSvg } from '../assets/svg-strings/ownedDogSvg';
+import { rescueDogSvg } from '../assets/svg-strings/rescueDogSvg';
+import { strayDogSvg } from '../assets/svg-strings/strayDogSvg';
 
 interface Dog {
   id: string;

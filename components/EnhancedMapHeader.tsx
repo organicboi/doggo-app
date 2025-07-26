@@ -1,13 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, Pressable, Animated, Dimensions, ScrollView } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { useRef, useState } from 'react';
+import { Animated, Dimensions, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text, useTheme } from 'react-native-paper';
 import { SvgXml } from 'react-native-svg';
-import { strayDogSvg } from '../assets/svg-strings/strayDogSvg';
-import { rescueDogSvg } from '../assets/svg-strings/rescueDogSvg';
 import { ownedDogSvg } from '../assets/svg-strings/ownedDogSvg';
+import { rescueDogSvg } from '../assets/svg-strings/rescueDogSvg';
+import { strayDogSvg } from '../assets/svg-strings/strayDogSvg';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

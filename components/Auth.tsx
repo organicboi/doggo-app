@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import React, { useState } from 'react'
 import { Alert, AppState, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
 
 // Tells Supabase Auth to continuously refresh the session automatically if
@@ -22,6 +23,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const insets = useSafeAreaInsets()
 
   async function signInWithEmail() {
     setLoading(true)
@@ -68,87 +70,95 @@ export default function Auth() {
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <SafeAreaView style={styles.container} edges={['top']}>
       <LinearGradient
         colors={['#667eea', '#764ba2']}
         style={styles.gradient}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Ionicons name="paw" size={60} color="#fff" />
-            </View>
-            <Text style={styles.appTitle}>DogoApp</Text>
-            <Text style={styles.subtitle}>Connect with dog lovers</Text>
-          </View>
-
-          <View style={styles.formContainer}>
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.textInput}
-                placeholder="Email address"
-                placeholderTextColor="#999"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
-              />
+        <KeyboardAvoidingView 
+          style={styles.keyboardView} 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ScrollView 
+            contentContainerStyle={[
+              styles.scrollContainer,
+              { paddingTop: Math.max(insets.top, 20) }
+            ]}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.logoContainer}>
+              <View style={styles.logoCircle}>
+                <Ionicons name="paw" size={60} color="#fff" />
+              </View>
+              <Text style={styles.appTitle}>DogoApp</Text>
+              <Text style={styles.subtitle}>Connect with dog lovers</Text>
             </View>
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={[styles.textInput, styles.passwordInput]}
-                placeholder="Password"
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoComplete="password"
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-outline" : "eye-off-outline"}
-                  size={20}
-                  color="#666"
+            <View style={styles.formContainer}>
+              <View style={styles.inputContainer}>
+                <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Email address"
+                  placeholderTextColor="#999"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoComplete="email"
                 />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.textInput, styles.passwordInput]}
+                  placeholder="Password"
+                  placeholderTextColor="#999"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-outline" : "eye-off-outline"}
+                    size={20}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+                onPress={handleSubmit}
+                disabled={loading}
+              >
+                <Text style={styles.submitButtonText}>
+                  {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.switchButton}
+                onPress={() => setIsSignUp(!isSignUp)}
+              >
+                <Text style={styles.switchButtonText}>
+                  {isSignUp 
+                    ? 'Already have an account? Sign In' 
+                    : "Don't have an account? Sign Up"
+                  }
+                </Text>
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={loading}
-            >
-              <Text style={styles.submitButtonText}>
-                {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.switchButton}
-              onPress={() => setIsSignUp(!isSignUp)}
-            >
-              <Text style={styles.switchButtonText}>
-                {isSignUp 
-                  ? 'Already have an account? Sign In' 
-                  : "Don't have an account? Sign Up"
-                }
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </LinearGradient>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   )
 }
 
@@ -159,10 +169,14 @@ const styles = StyleSheet.create({
   gradient: {
     flex: 1,
   },
+  keyboardView: {
+    flex: 1,
+  },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
+    minHeight: '100%',
   },
   logoContainer: {
     alignItems: 'center',
@@ -176,72 +190,86 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
   },
   appTitle: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subtitle: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
   },
   formContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 20,
-    padding: 30,
+    borderRadius: 24,
+    padding: 32,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 10,
+      height: 16,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 15,
-    elevation: 10,
+    shadowRadius: 24,
+    elevation: 16,
+    backdropFilter: 'blur(10px)',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+    paddingHorizontal: 20,
     paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: 16,
   },
   textInput: {
     flex: 1,
     fontSize: 16,
-    paddingVertical: 16,
+    paddingVertical: 18,
     color: '#333',
+    fontWeight: '500',
   },
   passwordInput: {
     paddingRight: 50,
   },
   eyeIcon: {
     position: 'absolute',
-    right: 16,
-    padding: 4,
+    right: 20,
+    padding: 8,
   },
   submitButton: {
     backgroundColor: '#667eea',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 16,
     shadowColor: '#667eea',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 8,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
   },
   submitButtonDisabled: {
     backgroundColor: '#ccc',
@@ -251,15 +279,17 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   switchButton: {
-    marginTop: 20,
+    marginTop: 24,
     alignItems: 'center',
+    paddingVertical: 8,
   },
   switchButtonText: {
     color: '#667eea',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 }) 
