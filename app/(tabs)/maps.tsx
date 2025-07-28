@@ -1,10 +1,18 @@
-import { StyleSheet, Text, View } from 'react-native'
-const maps = () => {
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import EnhancedOpenSourceMap from '../../components/EnhancedOpenSourceMap';
+
+export default function MapsTab() {
   return (
-    <View>
-      <Text>maps</Text>
+    <View style={styles.container}>
+      <EnhancedOpenSourceMap />
     </View>
-  )
+  );
 }
-export default maps
-const styles = StyleSheet.create({})
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+});

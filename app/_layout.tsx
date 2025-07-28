@@ -2,6 +2,7 @@ import { Session } from '@supabase/supabase-js';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import { Provider as PaperProvider } from 'react-native-paper'; // ✅ Import PaperProvider
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import Auth from '../components/Auth';
 import { supabase } from '../lib/supabase';
@@ -11,13 +12,11 @@ export default function Layout() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setLoading(false);
@@ -26,11 +25,12 @@ export default function Layout() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Show loading or auth screen if no session
   if (loading) {
     return (
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <View style={{ flex: 1, backgroundColor: '#667eea' }} />
+        <PaperProvider>
+          <View style={{ flex: 1, backgroundColor: '#667eea' }} />
+        </PaperProvider>
       </SafeAreaProvider>
     );
   }
@@ -38,17 +38,20 @@ export default function Layout() {
   if (!session) {
     return (
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <Auth />
+        <PaperProvider>
+          <Auth />
+        </PaperProvider>
       </SafeAreaProvider>
     );
   }
 
-  // Show main app if authenticated
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
+      <PaperProvider>  {/* ✅ Wrap whole app here */}
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+      </PaperProvider>
     </SafeAreaProvider>
   );
 }
