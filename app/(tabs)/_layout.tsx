@@ -39,6 +39,14 @@ const tabConfigs: TabConfig[] = [
     gradient: ['#10b981', '#059669'] 
   },
   { 
+    name: 'community', 
+    title: 'Community', 
+    icon: 'pets', 
+    iconType: 'MaterialIcons',
+    color: '#f59e0b', 
+    gradient: ['#f59e0b', '#d97706'] 
+  },
+  { 
     name: 'user', 
     title: 'Profile', 
     icon: 'user', 
@@ -260,6 +268,12 @@ export default function TabLayout() {
         name="maps"
         options={{
           title: 'Maps',
+        }}
+      />
+      <Tabs.Screen
+        name="community"
+        options={{
+          title: 'Community',
         }}
       />
       <Tabs.Screen
