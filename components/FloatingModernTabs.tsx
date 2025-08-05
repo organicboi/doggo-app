@@ -1,9 +1,9 @@
-import React, { useRef, useEffect, useMemo } from 'react';
-import { View, StyleSheet, Pressable, Animated, Dimensions, Platform, Appearance, ColorSchemeName } from 'react-native';
-import { Text } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { Animated, Appearance, ColorSchemeName, Dimensions, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -282,7 +282,7 @@ export default React.memo(function FloatingModernTabs({
       </View>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

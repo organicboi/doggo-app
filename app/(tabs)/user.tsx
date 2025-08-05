@@ -1,7 +1,7 @@
 import { Session } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
-import Account from '../../components/Account'
+import EnhancedProfile from '../../components/EnhancedProfile'
 import { supabase } from '../../lib/supabase'
 
 const UserScreen = () => {
@@ -21,7 +21,7 @@ const UserScreen = () => {
 
   return (
     <View style={styles.container}>
-      {session && <Account session={session} />}
+      {session && <EnhancedProfile session={session} />}
     </View>
   )
 }
