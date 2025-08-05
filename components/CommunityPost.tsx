@@ -1,17 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    Dimensions,
-    Image,
-    Share,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  Dimensions,
+  Image,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { Post } from '../app/(tabs)/community';
+import { supabase } from '../lib/supabase';
 import { CommentsModal } from './CommentsModal';
+import { EditPostModal } from './EditPostModal';
+import { ImageZoomModal } from './ImageZoomModal';
+import { PostOptionsModal } from './PostOptionsModal';
 import { ShareModal } from './ShareModal';
+import { VideoPlayerModal } from './VideoPlayerModal';
+import { VideoThumbnail } from './VideoThumbnail';
 
 const { width } = Dimensions.get('window');
 
@@ -19,13 +26,21 @@ interface CommunityPostProps {
   post: Post;
   onLike: (postId: string, isLiked: boolean) => void;
   onShare: (postId: string, shareCaption?: string) => void;
+  onDelete?: (postId: string) => void;
+  onUpdate?: () => void;
   currentUserId?: string;
 }
 
-export function CommunityPost({ post, onLike, onShare, currentUserId }: CommunityPostProps) {
+export function CommunityPost({ post, onLike, onShare, onDelete, onUpdate, currentUserId }: CommunityPostProps) {
   const [showComments, setShowComments] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showImageZoom, setShowImageZoom] = useState(false);
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
+  
+  const isOwner = currentUserId === post.author_id;
 
   const handleLike = () => {
     onLike(post.id, post.is_liked || false);
@@ -37,6 +52,44 @@ export function CommunityPost({ post, onLike, onShare, currentUserId }: Communit
 
   const handleShare = () => {
     setShowShareModal(true);
+  };
+
+  const handleVideoPress = () => {
+    if (post.video_url) {
+      setShowVideoPlayer(true);
+    } else {
+      Alert.alert('Error', 'Video is not available');
+    }
+  };
+
+  const handleOptionsPress = () => {
+    setShowOptionsModal(true);
+  };
+
+  const handleEdit = () => {
+    setShowEditModal(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', post.id);
+
+      if (error) throw error;
+
+      onDelete?.(post.id);
+      Alert.alert('Success', 'Post deleted successfully');
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      Alert.alert('Error', 'Failed to delete post');
+    }
+  };
+
+  const handleImagePress = (index: number) => {
+    setImageIndex(index);
+    setShowImageZoom(true);
   };
 
   const handleExternalShare = async () => {
@@ -98,7 +151,7 @@ export function CommunityPost({ post, onLike, onShare, currentUserId }: Communit
         {post.images.map((imageUrl, index) => (
           <TouchableOpacity
             key={index}
-            onPress={() => setImageIndex(index)}
+            onPress={() => handleImagePress(index)}
             style={[
               styles.imageWrapper,
               post.images!.length === 1 && styles.singleImage,
@@ -183,7 +236,7 @@ export function CommunityPost({ post, onLike, onShare, currentUserId }: Communit
             </View>
           </View>
         </View>
-        <TouchableOpacity style={styles.moreButton}>
+        <TouchableOpacity style={styles.moreButton} onPress={handleOptionsPress}>
           <Ionicons name="ellipsis-horizontal" size={20} color="#666" />
         </TouchableOpacity>
       </View>
@@ -205,12 +258,15 @@ export function CommunityPost({ post, onLike, onShare, currentUserId }: Communit
       {/* Images */}
       {renderImages()}
 
-      {/* Video */}
+      {/* Video Thumbnail */}
       {post.video_url && (
         <View style={styles.videoContainer}>
-          <TouchableOpacity style={styles.videoThumbnail}>
-            <Ionicons name="play-circle" size={50} color="white" />
-          </TouchableOpacity>
+          <VideoThumbnail
+            videoUrl={post.video_url}
+            onPress={handleVideoPress}
+            style={styles.videoThumbnail}
+            showDuration={true}
+          />
         </View>
       )}
 
@@ -256,6 +312,45 @@ export function CommunityPost({ post, onLike, onShare, currentUserId }: Communit
         onShare={(caption: string) => onShare(post.id, caption)}
         post={post}
       />
+
+      <PostOptionsModal
+        visible={showOptionsModal}
+        onClose={() => setShowOptionsModal(false)}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        isOwner={isOwner}
+        postType={post.post_type}
+        postTitle={post.title || undefined}
+        postId={post.id}
+      />
+
+      <EditPostModal
+        visible={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onPostUpdated={() => {
+          setShowEditModal(false);
+          onUpdate?.();
+        }}
+        post={post}
+      />
+
+      {post.images && post.images.length > 0 && (
+        <ImageZoomModal
+          visible={showImageZoom}
+          onClose={() => setShowImageZoom(false)}
+          images={post.images}
+          initialIndex={imageIndex}
+        />
+      )}
+
+      {post.video_url && (
+        <VideoPlayerModal
+          key={`video-${post.id}-${showVideoPlayer ? Date.now() : 'closed'}`}
+          visible={showVideoPlayer}
+          videoUrl={post.video_url}
+          onClose={() => setShowVideoPlayer(false)}
+        />
+      )}
     </View>
   );
 }
@@ -419,12 +514,58 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     borderRadius: 8,
     marginBottom: 12,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  videoThumbnail: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+  },
+  videoThumbnailPlaceholder: {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  videoThumbnail: {
+  video: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  videoOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  playButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    marginBottom: 10,
+  },
+  videoLabel: {
+    color: 'white',
+    fontSize: 14,
+    textAlign: 'center',
+    opacity: 0.8,
   },
   actions: {
     flexDirection: 'row',

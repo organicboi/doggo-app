@@ -16,6 +16,7 @@ import {
     View,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { VideoThumbnail } from './VideoThumbnail';
 
 interface Dog {
   id: string;
@@ -36,6 +37,7 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
   const [title, setTitle] = useState('');
   const [postType, setPostType] = useState<'photo' | 'video' | 'story' | 'help_request'>('photo');
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
   const [selectedDog, setSelectedDog] = useState<Dog | null>(null);
   const [userDogs, setUserDogs] = useState<Dog[]>([]);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
@@ -55,8 +57,7 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
       const { data, error } = await supabase
         .from('dogs')
         .select('id, name, breed, profile_image_url')
-        .eq('owner_id', userId)
-        .eq('is_active', true);
+        .eq('owner_id', userId);
 
       if (error) throw error;
       setUserDogs(data || []);
@@ -97,7 +98,7 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsMultipleSelection: true,
         selectionLimit: 5,
         quality: 0.8,
@@ -113,8 +114,89 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
     }
   };
 
+  const pickVideos = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please grant camera roll permissions to select videos');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['videos'],
+        allowsMultipleSelection: false, // Only one video
+        quality: 0.5, // Further reduced quality for smaller file size
+        videoMaxDuration: 15, // Reduced to 15 seconds max to keep file size very manageable
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        
+        // Check duration if available
+        if (asset.duration && asset.duration > 30000) { // 30 seconds in milliseconds
+          Alert.alert('Error', 'Please select a video shorter than 30 seconds to ensure successful upload.');
+          return;
+        }
+        
+        setSelectedVideos([asset.uri]); // Replace any existing video
+      }
+    } catch (error) {
+      console.error('Error picking videos:', error);
+      Alert.alert('Error', 'Failed to select videos');
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please grant camera permissions to take photos');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImages(prev => [...prev, result.assets[0].uri].slice(0, 5));
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo');
+    }
+  };
+
+  const takeVideo = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please grant camera permissions to record videos');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['videos'],
+        quality: 0.5, // Further reduced quality for smaller file size
+        videoMaxDuration: 15, // Reduced to 15 seconds max to keep file size very manageable
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedVideos([result.assets[0].uri]); // Replace any existing video
+      }
+    } catch (error) {
+      console.error('Error recording video:', error);
+      Alert.alert('Error', 'Failed to record video');
+    }
+  };
+
   const removeImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeVideo = (index: number) => {
+    setSelectedVideos(prev => prev.filter((_, i) => i !== index));
   };
 
   const uploadImages = async (imageUris: string[]) => {
@@ -122,9 +204,10 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
 
     for (const uri of imageUris) {
       try {
-        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
-        const formData = new FormData();
+        const fileName = `community/images/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
         
+        // Create FormData for React Native
+        const formData = new FormData();
         formData.append('file', {
           uri,
           name: fileName,
@@ -133,7 +216,7 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
 
         const { data, error } = await supabase.storage
           .from('dogs')
-          .upload(`community/${fileName}`, formData, {
+          .upload(fileName, formData, {
             contentType: 'image/jpeg',
           });
 
@@ -146,6 +229,59 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
         uploadedUrls.push(urlData.publicUrl);
       } catch (error) {
         console.error('Error uploading image:', error);
+      }
+    }
+
+    return uploadedUrls;
+  };
+
+  const uploadVideos = async (videoUris: string[]) => {
+    const uploadedUrls: string[] = [];
+
+    for (const uri of videoUris) {
+      try {
+        // Check file size first
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const fileSizeInMB = blob.size / (1024 * 1024);
+        
+        console.log(`Video file size: ${fileSizeInMB.toFixed(2)}MB`);
+        
+        // Use a more conservative limit - many cloud services have 10MB default limits
+        if (fileSizeInMB > 10) { 
+          Alert.alert('Error', `Video file is too large (${fileSizeInMB.toFixed(1)}MB). Please select a video under 10MB or record a shorter video.`);
+          throw new Error('Video file too large');
+        }
+
+        const fileName = `community/videos/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.mp4`;
+        
+        // Upload video as blob for better compatibility
+        const { data, error } = await supabase.storage
+          .from('dogs')
+          .upload(fileName, blob, {
+            contentType: 'video/mp4',
+            upsert: false,
+          });
+
+        if (error) {
+          console.error('Video upload error:', error);
+          if (error.message.includes('Payload too large') || error.message.includes('413') || error.message.includes('too large')) {
+            Alert.alert('Error', 'Video file is too large. Please record a shorter video (max 15 seconds) or reduce quality.');
+          } else {
+            Alert.alert('Error', 'Failed to upload video. Please try again.');
+          }
+          throw error;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('dogs')
+          .getPublicUrl(data.path);
+
+        uploadedUrls.push(urlData.publicUrl);
+        console.log('Video uploaded successfully:', urlData.publicUrl);
+      } catch (error) {
+        console.error('Error uploading video:', error);
+        throw error; // Re-throw to prevent post creation
       }
     }
 
@@ -201,13 +337,50 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
       return;
     }
 
+    // Validate that we don't have both images and videos
+    if (selectedImages.length > 0 && selectedVideos.length > 0) {
+      Alert.alert('Error', 'Please select either photos or videos, not both');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Upload images if any
+      // Upload media files
       let imageUrls: string[] = [];
+      let videoUrls: string[] = [];
+      
       if (selectedImages.length > 0) {
-        imageUrls = await uploadImages(selectedImages);
+        try {
+          imageUrls = await uploadImages(selectedImages);
+          setPostType('photo'); // Ensure post type is photo when images are uploaded
+        } catch (error) {
+          console.error('Image upload failed:', error);
+          Alert.alert('Error', 'Failed to upload images. Please try again.');
+          return;
+        }
+      }
+      
+      if (selectedVideos.length > 0) {
+        try {
+          videoUrls = await uploadVideos(selectedVideos);
+          setPostType('video'); // Ensure post type is video when videos are uploaded
+        } catch (error) {
+          console.error('Video upload failed:', error);
+          Alert.alert('Error', 'Failed to upload video. Please try a smaller video file.');
+          return;
+        }
+      }
+
+      // Validate that media upload succeeded if media was selected
+      if (selectedImages.length > 0 && imageUrls.length === 0) {
+        Alert.alert('Error', 'Image upload failed. Please try again.');
+        return;
+      }
+      
+      if (selectedVideos.length > 0 && videoUrls.length === 0) {
+        Alert.alert('Error', 'Video upload failed. Please try again.');
+        return;
       }
 
       // Extract hashtags from content
@@ -226,6 +399,7 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
         title: title.trim() || null,
         content: content.trim(),
         images: imageUrls.length > 0 ? imageUrls : null,
+        video_url: videoUrls.length > 0 ? videoUrls[0] : null, // Only support one video for now
         latitude: location?.coords.latitude || null,
         longitude: location?.coords.longitude || null,
         location_description: locationDescription.trim() || null,
@@ -248,6 +422,7 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
       setContent('');
       setTitle('');
       setSelectedImages([]);
+      setSelectedVideos([]);
       setSelectedDog(null);
       setLocationDescription('');
       setHashtags([]);
@@ -264,6 +439,7 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
 
   const postTypes = [
     { id: 'photo', label: 'Photo', icon: 'camera-outline' },
+    { id: 'video', label: 'Video', icon: 'videocam-outline' },
     { id: 'story', label: 'Story', icon: 'library-outline' },
     { id: 'help_request', label: 'Help', icon: 'help-circle-outline' },
   ];
@@ -285,7 +461,7 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
             disabled={loading || !content.trim()}
           >
             <Text style={[styles.postButtonText, loading && styles.postButtonTextDisabled]}>
-              {loading ? 'Posting...' : 'Post'}
+              {loading ? (selectedVideos.length > 0 ? 'Uploading video...' : 'Posting...') : 'Post'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -383,22 +559,44 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
             </View>
           )}
 
-          {/* Images */}
+          {/* Media Selection */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Photos</Text>
-              <TouchableOpacity style={styles.addImagesButton} onPress={pickImages}>
+            <Text style={styles.sectionTitle}>Add Media</Text>
+            <View style={styles.mediaButtons}>
+              <TouchableOpacity style={styles.mediaButton} onPress={pickImages}>
+                <Ionicons name="image-outline" size={20} color="#FF6B6B" />
+                <Text style={styles.mediaButtonText}>Photos</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.mediaButton} onPress={pickVideos}>
+                <Ionicons name="videocam-outline" size={20} color="#FF6B6B" />
+                <Text style={styles.mediaButtonText}>Videos</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.mediaButton} onPress={takePhoto}>
                 <Ionicons name="camera-outline" size={20} color="#FF6B6B" />
-                <Text style={styles.addImagesText}>Add Photos</Text>
+                <Text style={styles.mediaButtonText}>Camera</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.mediaButton} onPress={takeVideo}>
+                <Ionicons name="videocam" size={20} color="#FF6B6B" />
+                <Text style={styles.mediaButtonText}>Record</Text>
               </TouchableOpacity>
             </View>
-            {selectedImages.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagesContainer}>
+          </View>
+
+          {/* Selected Images */}
+          {selectedImages.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Selected Photos ({selectedImages.length}/5)</Text>
+                <TouchableOpacity onPress={() => setSelectedImages([])}>
+                  <Text style={styles.clearText}>Clear All</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaContainer}>
                 {selectedImages.map((uri, index) => (
-                  <View key={index} style={styles.imageWrapper}>
-                    <Image source={{ uri }} style={styles.selectedImage} />
+                  <View key={index} style={styles.mediaWrapper}>
+                    <Image source={{ uri }} style={styles.selectedMedia} />
                     <TouchableOpacity
-                      style={styles.removeImageButton}
+                      style={styles.removeMediaButton}
                       onPress={() => removeImage(index)}
                     >
                       <Ionicons name="close" size={16} color="white" />
@@ -406,8 +604,34 @@ export function CreatePostModal({ visible, onClose, onPostCreated, userId }: Cre
                   </View>
                 ))}
               </ScrollView>
-            )}
-          </View>
+            </View>
+          )}
+
+          {/* Selected Videos */}
+          {selectedVideos.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Selected Video</Text>
+                <TouchableOpacity onPress={() => setSelectedVideos([])}>
+                  <Text style={styles.clearText}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.mediaWrapper}>
+                <VideoThumbnail
+                  videoUrl={selectedVideos[0]}
+                  onPress={() => {}} // No action needed in create modal
+                  style={styles.videoPreviewThumbnail}
+                  showDuration={true}
+                />
+                <TouchableOpacity
+                  style={styles.removeMediaButton}
+                  onPress={() => removeVideo(0)}
+                >
+                  <Ionicons name="close" size={16} color="white" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
 
           {/* Location */}
           <View style={styles.section}>
@@ -573,6 +797,76 @@ const styles = StyleSheet.create({
   dogOptionText: {
     fontSize: 14,
     color: '#666',
+  },
+  mediaButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 8,
+  },
+  mediaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    gap: 6,
+    flex: 1,
+    minWidth: '45%',
+    justifyContent: 'center',
+  },
+  mediaButtonText: {
+    fontSize: 14,
+    color: '#FF6B6B',
+    fontWeight: '500',
+  },
+  clearText: {
+    fontSize: 14,
+    color: '#FF6B6B',
+    fontWeight: '500',
+  },
+  mediaContainer: {
+    marginTop: 8,
+  },
+  mediaWrapper: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  selectedMedia: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  removeMediaButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  videoPreview: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#333',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  videoPreviewThumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  videoLabel: {
+    fontSize: 10,
+    color: 'white',
+    marginTop: 4,
+    textAlign: 'center',
   },
   addImagesButton: {
     flexDirection: 'row',

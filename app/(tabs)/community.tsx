@@ -293,11 +293,21 @@ export default function CommunityScreen() {
     handleRefresh();
   };
 
+  const handlePostDeleted = (postId: string) => {
+    setPosts(prev => prev.filter(post => post.id !== postId));
+  };
+
+  const handlePostUpdated = () => {
+    handleRefresh();
+  };
+
   const renderPost = ({ item }: { item: Post }) => (
     <CommunityPost
       post={item}
       onLike={handleLikePost}
       onShare={handleSharePost}
+      onDelete={handlePostDeleted}
+      onUpdate={handlePostUpdated}
       currentUserId={user?.id}
     />
   );
@@ -364,6 +374,8 @@ export default function CommunityScreen() {
         onPress={() => setShowCreateModal(true)}
         icon="add"
         color="#FF6B6B"
+        extended={true}
+        label="Create Post"
       />
 
       <CreatePostModal
